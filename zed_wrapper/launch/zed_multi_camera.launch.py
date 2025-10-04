@@ -59,6 +59,7 @@ def launch_setup(context, *args, **kwargs):
     models = LaunchConfiguration('cam_models')
     serials = LaunchConfiguration('cam_serials')
     ids = LaunchConfiguration('cam_ids')
+    side_camera_names = LaunchConfiguration('side_camera_names')
 
     disable_tf = LaunchConfiguration('disable_tf')
 
@@ -67,7 +68,8 @@ def launch_setup(context, *args, **kwargs):
     serials_arr = parse_array_param(serials.perform(context))
     ids_arr = parse_array_param(ids.perform(context))
     disable_tf_val = disable_tf.perform(context)
-
+    side_camera_names_val = side_camera_names.perform(context)
+    
     num_cams = len(names_arr)
 
     if (num_cams != len(models_arr)):
@@ -82,6 +84,9 @@ def launch_setup(context, *args, **kwargs):
                 text='The `cam_serials` or `cam_ids` array argument must match the size of the `cam_names` array argument.'))
         ]
     
+    info = 'Using side_camera_names: ' + side_camera_names_val
+    actions.append(LogInfo(msg=TextSubstitution(text=info)))
+
     # ROS 2 Component Container
     container_name = 'zed_multi_container'
     distro = os.environ['ROS_DISTRO']
@@ -140,6 +145,11 @@ def launch_setup(context, *args, **kwargs):
         # A different node name is required by the Diagnostic Updated
         node_name = 'zed_node_' + str(cam_idx)
 
+        if(name in side_camera_names_val):
+            use_overide = 'true'
+        else:
+            use_overide = 'false'
+
         # Add the node
         # ZED Wrapper launch file
         zed_wrapper_launch = IncludeLaunchDescription(
@@ -155,7 +165,8 @@ def launch_setup(context, *args, **kwargs):
                 'camera_id': id,
                 'publish_tf': publish_tf,
                 'publish_map_tf': publish_tf,
-                'namespace': namespace_val
+                'namespace': namespace_val,
+                'use_overide': use_overide
             }.items()
         )
         actions.append(zed_wrapper_launch)

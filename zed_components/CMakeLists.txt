@@ -145,6 +145,34 @@ find_package(visualization_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
 find_package(robot_localization REQUIRED)
 
+# Check ISAAC ROS Nitros availability
+find_package(isaac_ros_common QUIET)
+if(isaac_ros_common_FOUND)  
+  find_package(isaac_ros_nitros)
+  if(isaac_ros_nitros_FOUND)
+      find_package(isaac_ros_managed_nitros QUIET)
+      if(isaac_ros_managed_nitros_FOUND)
+          find_package(isaac_ros_nitros_image_type QUIET)
+          if(isaac_ros_nitros_image_type_FOUND)
+            list(APPEND DEPENDENCIES isaac_ros_common)
+            list(APPEND DEPENDENCIES isaac_ros_nitros)
+            list(APPEND DEPENDENCIES isaac_ros_managed_nitros)
+            list(APPEND DEPENDENCIES isaac_ros_nitros_image_type)
+            add_definitions(-DFOUND_ISAAC_ROS_NITROS)
+            message(" * ISAAC ROS Nitros transport is available")
+          else()
+            message(WARNING " * 'isaac_ros_nitros_image_type' not found, ISAAC ROS NITROS transport will not be available.")
+          endif()
+      else()
+        message(WARNING " * 'isaac_ros_managed_nitros' not found, ISAAC ROS NITROS transport will not be available.")
+      endif()
+  else()
+    message(WARNING " * 'isaac_ros_nitros' not found, ISAAC ROS NITROS transport will not be available.")
+  endif()
+#else()
+#  message(" * 'isaac_ros_common' not found, ISAAC ROS NITROS transport will not be available.")
+endif()
+
 if(NOT ${FOUND_ROS2_DISTRO} STREQUAL "foxy")
   find_package(point_cloud_transport REQUIRED)
   list(APPEND DEPENDENCIES point_cloud_transport)
@@ -196,6 +224,7 @@ set(SL_TOOLS_SRC
 
 set(ZED_CAMERA_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include/visibility_control.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/include/sl_version.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera/include/zed_camera_component.hpp
 )
 
@@ -208,11 +237,14 @@ set(ZED_CAMERA_SRC
 
 set(ZED_CAMERA_ONE_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include/visibility_control.hpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera/include/zed_camera_one_component.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/include/sl_version.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera_one/include/zed_camera_one_component.hpp
 )
 
 set(ZED_CAMERA_ONE_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera/src/zed_camera_one_component.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera_one/src/zed_camera_one_component_main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera_one/src/zed_camera_one_component_sensors.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera_one/src/zed_camera_one_component_video.cpp
 )
 ###############################################################################
 # Bin and Install
@@ -228,7 +260,7 @@ target_include_directories(zed_camera_component PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${ZED_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera/include    
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/include
 )
 target_compile_definitions(zed_camera_component
@@ -255,7 +287,7 @@ target_include_directories(zed_camera_one_component PUBLIC
     ${CUDA_INCLUDE_DIRS}
     ${ZED_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/zed_camera_one/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/include
 )
 target_compile_definitions(zed_camera_one_component

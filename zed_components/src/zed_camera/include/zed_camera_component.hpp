@@ -38,14 +38,15 @@ public:
 
 protected:
   // ----> Initialization functions
-  void init();
+  void initNode();
+  void deInitNode();
+
   void initParameters();
   void initServices();
   void initThreads();
 
-  void close();
-
   void getDebugParams();
+  void getTopicEnableParams();
   void getSimParams();
   void getGeneralParams();
   void getVideoParams();
@@ -294,6 +295,7 @@ protected:
     tf2::Transform & odom2baseTransf, sl::Pose & slPose,
     rclcpp::Time t);
   void publishPose();
+  void publishPoseLandmarks();
   void publishGnssPose();
   void publishPoseStatus();
   void publishGnssPoseStatus();
@@ -415,6 +417,7 @@ private:
   std::string mFusedFixTopic;
   std::string mOriginFixTopic;
   std::string mPointcloudFusedTopic;
+  std::string mPointcloud3DLandmarksTopic;
   std::string mObjectDetTopic;
   std::string mBodyTrkTopic;
   std::string mOdomPathTopic;
@@ -424,6 +427,7 @@ private:
   // <---- Topics
 
   // ----> Parameter variables
+  // Debug
   bool _debugCommon = false;
   bool _debugSim = false;
   bool _debugVideoDepth = false;
@@ -443,6 +447,32 @@ private:
   // purposes; otherwise, this is always true.
   bool _nitrosDisabled = false;
 
+  // Topic Enablers
+  bool mPublishSensImu = true;
+  bool mPublishSensImuRaw = false;
+  bool mPublishSensMag = false;
+  bool mPublishSensBaro = false;
+  bool mPublishSensTemp = false;
+  bool mPublishSensImuTransf = false;
+  bool mPublishImgLeftRight = false;
+  bool mPublishImgRaw = false;
+  bool mPublishImgGray = false;
+  bool mPublishImgRgb = true;
+  bool mPublishImgStereo = false;
+  bool mPublishImgRoiMask = false;
+  bool mPublishOdomPose = true;
+  bool mPublishPoseCov = false;
+  bool mPublishPath = false;
+  bool mPublishDetPlane = false;
+  bool mPublishDepthMap = true;
+  bool mPublishDepthInfo = false;
+  bool mPublishPointcloud = true;
+  bool mPublishConfidence = false;
+  bool mPublishDisparity = false;
+  bool mPublishStatus = true;
+  bool mPublishSvoClock = false;
+
+  // General
   int mCamSerialNumber = 0;
   int mCamId = -1;
   bool mSimMode = false;     // Expecting simulation data?
@@ -471,7 +501,6 @@ private:
   double mSvoExpectedPeriod = 0.0;
   bool mUseSvoTimestamp = false;
   bool mUsePubTimestamps = false;
-  bool mPublishSvoClock = false;
   bool mGrabOnce = false;
   bool mGrabImuOnce = false;
   int mVerbose = 1;
@@ -524,13 +553,14 @@ private:
   std::vector<double> mInitialBasePose = std::vector<double>(6, 0.0);
   bool mResetOdomWhenLoopClosure = true;
   bool mResetPoseWithSvoLoop = true;
+  bool mPublish3DLandmarks = false;
+  uint8_t mPublishLandmarkSkipFrame = 15;
   double mPathPubRate = 2.0;
   double mTfOffset = 0.0;
   float mPosTrackDepthMinRange = 0.0f;
   bool mSetAsStatic = false;
   bool mSetGravityAsOrigin = false;
   int mPathMaxCount = -1;
-  bool mPublishPoseCov = true;
 
   bool mGnssFusionEnabled = false;
   std::string mGnssTopic = "/gps/fix";
@@ -812,12 +842,14 @@ private:
   camInfoPub mPubDepthCamInfoTrans;
   camInfoPub mPubConfMapCamInfoTrans;
 
-#ifndef FOUND_FOXY
+#ifdef FOUND_POINT_CLOUD_TRANSPORT
   point_cloud_transport::Publisher mPubCloud;
   point_cloud_transport::Publisher mPubFusedCloud;
+  point_cloud_transport::Publisher mPub3DLandmarks;
 #else
   pointcloudPub mPubCloud;
   pointcloudPub mPubFusedCloud;
+  pointcloudPub mPub3DLandmarks;
 #endif
 
   svoStatusPub mPubSvoStatus;
@@ -829,6 +861,7 @@ private:
   poseCovPub mPubPoseCov;
   odomPub mPubOdom;
   odomPub mPubGnssPose;
+  int mFrameSkipCountLandmarks = 0;
   gnssFusionStatusPub mPubGnssPoseStatus;
   pathPub mPubOdomPath;
   pathPub mPubPosePath;

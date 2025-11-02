@@ -45,13 +45,6 @@ default_config_common = os.path.join(
     'config',
     'common'
 )
-    
-# FFMPEG Configuration to be loaded by ZED Node
-default_config_ffmpeg = os.path.join(
-    get_package_share_directory('zed_wrapper'),
-    'config',
-    'ffmpeg.yaml'
-)
 
 # Object Detection Configuration to be loaded by ZED Node
 default_object_detection_config_path = os.path.join(
@@ -110,7 +103,6 @@ def launch_setup(context, *args, **kwargs):
     node_name = LaunchConfiguration('node_name')
 
     ros_params_override_path = LaunchConfiguration('ros_params_override_path')
-    config_ffmpeg = LaunchConfiguration('ffmpeg_config_path')
     object_detection_config_path = LaunchConfiguration('object_detection_config_path')
     custom_object_detection_config_path = LaunchConfiguration('custom_object_detection_config_path')
 
@@ -168,6 +160,9 @@ def launch_setup(context, *args, **kwargs):
         camera_model_val == 'zed2i' or 
         camera_model_val == 'zedx' or 
         camera_model_val == 'zedxm' or
+        camera_model_val == 'zedxhdr' or
+        camera_model_val == 'zedxhdrmini' or
+        camera_model_val == 'zedxhdrmax' or
         camera_model_val == 'virtual'):
         config_common_path_val = default_config_common + '_stereo.yaml'
     else:
@@ -184,10 +179,6 @@ def launch_setup(context, *args, **kwargs):
     )
 
     info = 'Using camera configuration file: ' + config_camera_path
-    return_array.append(LogInfo(msg=TextSubstitution(text=info)))
-
-    # FFMPEG configuration file
-    info = 'Using FFMPEG configuration file: ' + config_ffmpeg.perform(context)
     return_array.append(LogInfo(msg=TextSubstitution(text=info)))
 
     # Object Detection configuration file
@@ -259,15 +250,17 @@ def launch_setup(context, *args, **kwargs):
         if distro == 'foxy':
             # Foxy does not support the isolated mode
             container_exec='component_container'
+            arguments_val=['--ros-args', '--log-level', 'info']
         else:
             container_exec='component_container_isolated'
+            arguments_val=['--use_multi_threaded_executor','--ros-args', '--log-level', 'info']
         
         zed_container = ComposableNodeContainer(
                 name=container_name_val,
                 namespace=namespace_val,
                 package='rclcpp_components',
                 executable=container_exec,
-                arguments=['--use_multi_threaded_executor','--ros-args', '--log-level', 'info'],
+                arguments=arguments_val,
                 output=node_log_effective,
                 composable_node_descriptions=[]
         )
@@ -278,7 +271,6 @@ def launch_setup(context, *args, **kwargs):
             # YAML files
             config_common_path_val,  # Common parameters
             config_camera_path,  # Camera related parameters
-            config_ffmpeg, # FFMPEG parameters
             object_detection_config_path, # Object detection parameters
             custom_object_detection_config_path # Custom object detection parameters
     ]
@@ -318,6 +310,9 @@ def launch_setup(context, *args, **kwargs):
         camera_model_val=='zed2i' or
         camera_model_val=='zedx' or
         camera_model_val=='zedxm' or
+        camera_model_val == 'zedxhdr' or
+        camera_model_val == 'zedxhdrmini' or
+        camera_model_val == 'zedxhdrmax' or
         camera_model_val=='virtual'):
         zed_wrapper_component = ComposableNode(
             package='zed_components',
@@ -327,7 +322,7 @@ def launch_setup(context, *args, **kwargs):
             parameters=node_parameters,
             extra_arguments=[{'use_intra_process_comms': enable_ipc}]
         )
-    else: # 'zedxonegs' or 'zedxone4k')
+    else: # camera_model_val == 'zedxonegs' or camera_model_val == 'zedxone4k' or camera_model_val == 'zedxonehdr'
         zed_wrapper_component = ComposableNode(
             package='zed_components',
             namespace=namespace_val,
@@ -370,7 +365,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'camera_model',
                 description='[REQUIRED] The model of the camera. Using a wrong camera model can disable camera features.',
-                choices=['zed', 'zedm', 'zed2', 'zed2i', 'zedx', 'zedxm', 'virtual', 'zedxonegs', 'zedxone4k']),
+                choices=['zed', 'zedm', 'zed2', 'zed2i', 'zedx', 'zedxm', 'zedxhdr', 'zedxhdrmini', 'zedxhdrmax', 'virtual', 'zedxonegs', 'zedxone4k', 'zedxonehdr']),
             DeclareLaunchArgument(
                 'container_name',
                 default_value='',
@@ -387,10 +382,6 @@ def generate_launch_description():
                 'ros_params_override_path',
                 default_value='',
                 description='The path to an additional parameters file to override the default values.'),
-            DeclareLaunchArgument(
-                'ffmpeg_config_path',
-                default_value=TextSubstitution(text=default_config_ffmpeg),
-                description='Path to the YAML configuration file for the FFMPEG parameters when using FFMPEG image transport plugin.'),
             DeclareLaunchArgument(
                 'object_detection_config_path',
                 default_value=TextSubstitution(text=default_object_detection_config_path),

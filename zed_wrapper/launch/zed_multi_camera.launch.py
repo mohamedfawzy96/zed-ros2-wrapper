@@ -53,7 +53,7 @@ def launch_setup(context, *args, **kwargs):
     multi_zed_xacro_path = os.path.join(
     get_package_share_directory('zed_wrapper'),
     'urdf',
-    'zed_multi.urdf.xacro')
+    'zed_quad.urdf.xacro')
 
     names = LaunchConfiguration('cam_names')
     models = LaunchConfiguration('cam_models')
@@ -230,6 +230,10 @@ def generate_launch_description():
                 'disable_tf',
                 default_value='False',
                 description='If `True` disable TF broadcasting for all the cameras in order to fuse visual odometry information externally.'),
+            DeclareLaunchArgument(
+                'side_camera_names',
+                default_value='[]',
+                description='An array containing names of side cameras that need special override config, e.g. [zed2,zed3]'),
             OpaqueFunction(function=launch_setup)
         ]
     )

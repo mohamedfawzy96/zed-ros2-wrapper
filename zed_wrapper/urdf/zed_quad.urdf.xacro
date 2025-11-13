@@ -47,9 +47,9 @@
     - Position: 0.5m forward from center, 4.0m high (roof mounted)
     - Orientation: Looking forward (0° rotation)
   -->
-  <joint name="$(arg camera_name_0)_camera_joint" type="fixed">
+  <joint name="$(arg camera_name_2)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
-      <child link="$(arg camera_name_0)_camera_link"/>
+      <child link="$(arg camera_name_2)_camera_link"/>
       <origin xyz="0.5 0.0 4.0" rpy="0 0 0" />
   </joint>
 
@@ -58,9 +58,9 @@
     - Position: 0.5m backward from center, 4.0m high (roof mounted)
     - Orientation: Looking backward (180° rotation around Z axis)
   -->
-  <joint name="$(arg camera_name_1)_camera_joint" type="fixed">
+  <joint name="$(arg camera_name_0)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
-      <child link="$(arg camera_name_1)_camera_link"/>
+      <child link="$(arg camera_name_0)_camera_link"/>
       <origin xyz="-0.5 0.0 4.0" rpy="0 0 ${M_PI}" />
   </joint>
 
@@ -69,9 +69,9 @@
     - Position: 0.4m to the left of center, 4.0m high (roof mounted)
     - Orientation: Looking left (90° rotation around Z axis)
   -->
-  <joint name="$(arg camera_name_2)_camera_joint" type="fixed">
+  <joint name="$(arg camera_name_3)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
-      <child link="$(arg camera_name_2)_camera_link"/>
+      <child link="$(arg camera_name_3)_camera_link"/>
       <origin xyz="0.0 0.4 4.0" rpy="0 0 ${M_PI/2}" />
   </joint>
 
@@ -80,9 +80,9 @@
     - Position: 0.4m to the right of center, 4.0m high (roof mounted)
     - Orientation: Looking right (270° or -90° rotation around Z axis)
   -->
-  <joint name="$(arg camera_name_3)_camera_joint" type="fixed">
+  <joint name="$(arg camera_name_1)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
-      <child link="$(arg camera_name_3)_camera_link"/>
+      <child link="$(arg camera_name_1)_camera_link"/>
       <origin xyz="0.0 -0.4 4.0" rpy="0 0 ${-M_PI/2}" />
   </joint>
 

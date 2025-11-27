@@ -45,45 +45,45 @@
   <!-- 
     CAMERA 0: FRONT
     - Position: 0.5m forward from center, 4.0m high (roof mounted)
-    - Orientation: Looking forward (0° rotation)
+    - Orientation: Looking forward (0° rotation), tilted up 30°
   -->
   <joint name="$(arg camera_name_2)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
       <child link="$(arg camera_name_2)_camera_link"/>
-      <origin xyz="0.5 0.0 4.0" rpy="0 0 0" />
+      <origin xyz="0.5 0.0 3.1" rpy="0.0 0.39 0" />
   </joint>
 
   <!-- 
     CAMERA 1: REAR
     - Position: 0.5m backward from center, 4.0m high (roof mounted)
-    - Orientation: Looking backward (180° rotation around Z axis)
+    - Orientation: Looking backward (180° rotation around Z axis), tilted up 30°
   -->
   <joint name="$(arg camera_name_0)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
       <child link="$(arg camera_name_0)_camera_link"/>
-      <origin xyz="-0.5 0.0 4.0" rpy="0 0 ${M_PI}" />
+      <origin xyz="-0.5 0.0 3.25" rpy="0.0 0.2 ${M_PI}" />
   </joint>
 
   <!-- 
     CAMERA 2: LEFT
     - Position: 0.4m to the left of center, 4.0m high (roof mounted)
-    - Orientation: Looking left (90° rotation around Z axis)
+    - Orientation: Looking left (90° rotation around Z axis), tilted up 30°
   -->
   <joint name="$(arg camera_name_3)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
       <child link="$(arg camera_name_3)_camera_link"/>
-      <origin xyz="0.0 0.4 4.0" rpy="0 0 ${M_PI/2}" />
+      <origin xyz="0.0 0.4 3.2" rpy="-0.0 0.39 ${M_PI/2}" />
   </joint>
 
   <!-- 
     CAMERA 3: RIGHT
     - Position: 0.4m to the right of center, 4.0m high (roof mounted)
-    - Orientation: Looking right (270° or -90° rotation around Z axis)
+    - Orientation: Looking right (270° or -90° rotation around Z axis), tilted up 30°
   -->
   <joint name="$(arg camera_name_1)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
       <child link="$(arg camera_name_1)_camera_link"/>
-      <origin xyz="0.0 -0.4 4.0" rpy="0 0 ${-M_PI/2}" />
+      <origin xyz="0.0 -0.4 3.2" rpy="-0.07 0.39 ${-M_PI/2}" />
   </joint>
 
   <!-- 

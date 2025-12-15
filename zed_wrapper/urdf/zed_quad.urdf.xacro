@@ -28,10 +28,10 @@
   
   <!-- Define the required parameters -->
   <xacro:arg name="multi_link" default="base_link" />
-  <xacro:arg name="camera_name_0" default="zed0" />
-  <xacro:arg name="camera_name_1" default="zed1" />
-  <xacro:arg name="camera_name_2" default="zed2" />
-  <xacro:arg name="camera_name_3" default="zed3" />
+  <xacro:arg name="camera_name_0" default="zed0" /> 
+  <xacro:arg name="camera_name_1" default="zed1" /> 
+  <xacro:arg name="camera_name_2" default="zed2" /> 
+  <xacro:arg name="camera_name_3" default="zed3" /> 
 
   <!-- Define the reference link (center of your robot/vehicle) -->
   <link name="$(arg multi_link)" />
@@ -61,7 +61,7 @@
   <joint name="$(arg camera_name_0)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
       <child link="$(arg camera_name_0)_camera_link"/>
-      <origin xyz="-0.5 0.0 3.25" rpy="0.0 0.2 ${M_PI}" />
+      <origin xyz="-0.5 0.0 0.4" rpy="0.0 0.0 ${M_PI}" />
   </joint>
 
   <!-- 
@@ -83,7 +83,7 @@
   <joint name="$(arg camera_name_1)_camera_joint" type="fixed">
       <parent link="$(arg multi_link)"/>
       <child link="$(arg camera_name_1)_camera_link"/>
-      <origin xyz="0.0 -0.4 3.2" rpy="-0.07 0.39 ${-M_PI/2}" />
+      <origin xyz="0.0 0.0 0.4" rpy="-0.07 0.39 ${-M_PI/2}" />
   </joint>
 
   <!-- 

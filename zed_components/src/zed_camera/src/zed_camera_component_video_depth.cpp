@@ -538,6 +538,12 @@ void ZedCamera::getVideoParams()
       shared_from_this(), "video.denoising", mGmslDenoising,
       mGmslDenoising,
       " * ZED X Auto Digital Gain range max: ", true, 0, 100);
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+    sl_tools::getParam(
+      shared_from_this(), "video.ae_antibanding", mGmslAEAntibanding,
+      mGmslAEAntibanding,
+      " * ZED X AE Anti-banding (0=OFF,1=AUTO,2=50Hz,3=60Hz): ", true, 0, 3);
+#endif
   }
 }
 
@@ -1333,6 +1339,10 @@ void ZedCamera::applyZEDXSettings()
   applyZEDXAutoAnalogGainRange();
   applyZEDXAutoDigitalGainRange();
   applyZEDXDenoising();
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  applyZEDXAEAntibanding();
+  readSceneIlluminance();
+#endif
 }
 
 void ZedCamera::applyZEDXExposureSettings()
@@ -1571,6 +1581,43 @@ void ZedCamera::applyZEDXDenoising()
     }
   }
 }
+
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+void ZedCamera::applyZEDXAEAntibanding()
+{
+  if (!mStreamMode) {
+    sl::ERROR_CODE err;
+    sl::VIDEO_SETTINGS setting = sl::VIDEO_SETTINGS::AE_ANTIBANDING;
+    int value;
+    err = mZed->getCameraSettings(setting, value);
+    if (err == sl::ERROR_CODE::SUCCESS && value != mGmslAEAntibanding) {
+      err = mZed->setCameraSettings(setting, mGmslAEAntibanding);
+      DEBUG_STREAM_CTRL(
+        "New setting for " << sl::toString(setting).c_str()
+                           << ": " << mGmslAEAntibanding
+                           << " [Old " << value << "]");
+    }
+
+    if (err != sl::ERROR_CODE::SUCCESS) {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "Error setting "
+          << sl::toString(setting).c_str()
+          << ": "
+          << sl::toString(err).c_str());
+    }
+  }
+}
+
+void ZedCamera::readSceneIlluminance()
+{
+  sl::ERROR_CODE err;
+  int value = -1;
+  err = mZed->getCameraSettings(sl::VIDEO_SETTINGS::SCENE_ILLUMINANCE, value);
+  if (err == sl::ERROR_CODE::SUCCESS) {
+    mSceneIlluminance = value;
+  }
+}
+#endif
 
 void ZedCamera::processVideoDepth()
 {
@@ -3244,7 +3291,8 @@ bool ZedCamera::handleGmsl2Params(
     name == "video.digital_gain" ||
     name == "video.auto_digital_gain_range_min" ||
     name == "video.auto_digital_gain_range_max" ||
-    name == "video.denoising")
+    name == "video.denoising" ||
+    name == "video.ae_antibanding")
   {
     rclcpp::ParameterType correctType = rclcpp::ParameterType::PARAMETER_INTEGER;
     if (param.get_type() != correctType) {
@@ -3279,6 +3327,8 @@ bool ZedCamera::handleGmsl2Params(
       mGmslAutoDigitalGainRangeMax = val;
     } else if (name == "video.denoising") {
       mGmslDenoising = val;
+    } else if (name == "video.ae_antibanding") {
+      mGmslAEAntibanding = val;
     }
     mCamSettingsDirty = true;
     DEBUG_STREAM_DYN_PARAMS("Parameter '" << name << "' correctly set to " << val);

@@ -743,6 +743,12 @@ void ZedCamera::getDebugParams()
     shared_from_this(), "debug.use_pub_timestamps",
     mUsePubTimestamps, mUsePubTimestamps,
     " * Use Pub Timestamps: ");
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  sl_tools::getParam(
+    shared_from_this(), "debug.sdk_use_monotonic_clock",
+    mUseSdkMonotonicClock, mUseSdkMonotonicClock,
+    " * SDK Monotonic Clock: ");
+#endif
   sl_tools::getParam(
     shared_from_this(), "debug.sdk_verbose_log_file",
     mVerboseLogFile, mVerboseLogFile, " * SDK Verbose File: ");
@@ -1434,6 +1440,31 @@ void ZedCamera::getSvoParams()
         mSvoRate, " * SVO replay rate: ", true, 0.1, 5.0);
     }
   }
+
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  std::string enc_preset = "DEFAULT";
+  sl_tools::getParam(
+    shared_from_this(), "general.svo_encoding_preset", enc_preset,
+    enc_preset, " * SVO Encoding preset: ");
+  if (enc_preset == "ULTRAFAST") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::ULTRAFAST;
+  } else if (enc_preset == "FAST") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::FAST;
+  } else if (enc_preset == "MEDIUM") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::MEDIUM;
+  } else if (enc_preset == "SLOW") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::SLOW;
+  } else {
+    if (enc_preset != "DEFAULT") {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "Invalid 'general.svo_encoding_preset' value: '"
+          << enc_preset
+          << "'. Valid values: DEFAULT, ULTRAFAST, FAST, MEDIUM, SLOW. Using 'DEFAULT'.");
+    }
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::DEFAULT;
+  }
+#endif
 }
 
 void ZedCamera::getRoiParams()
@@ -2869,6 +2900,28 @@ bool ZedCamera::startCamera()
   mThreadStop = false;
   mGrabStatus = sl::ERROR_CODE::LAST;
 
+  // Tell sl_tools whether timestamps in this process come from a replay
+  // source (SVO / simulation) so slTime2Ros knows not to apply the live
+  // monotonic-clock offset to file-recorded values. Process-wide.
+  sl_tools::setSdkReplayMode(mSvoMode || mSimMode);
+
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  if (mUseSdkMonotonicClock) {
+    sl::Camera::setTimestampClock(sl::TIMESTAMP_CLOCK::MONOTONIC_CLOCK);
+    if (sl::Camera::getTimestampClock() != sl::TIMESTAMP_CLOCK::MONOTONIC_CLOCK) {
+      RCLCPP_WARN(
+        get_logger(),
+        "Another node in this process already set the SDK timestamp clock; "
+        "this node's 'debug.sdk_use_monotonic_clock' request was ignored.");
+      mUseSdkMonotonicClock = false;
+    } else {
+      RCLCPP_INFO(
+        get_logger(),
+        "SDK timestamp clock set to MONOTONIC_CLOCK (process-wide).");
+    }
+  }
+#endif
+
   while (1) {
     rclcpp::sleep_for(500ms);
 
@@ -2877,6 +2930,20 @@ bool ZedCamera::startCamera()
     if (mConnStatus == sl::ERROR_CODE::SUCCESS) {
       DEBUG_STREAM_COMM("Opening successfull");
       mUptimer.tic(); // Sets the beginning of the camera connection time
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+      if (mUseSdkMonotonicClock && !mSvoMode && !mSimMode) {
+        const sl::Timestamp sdk_now = sl::getCurrentTimeStamp();
+        const rclcpp::Time ros_now = get_clock()->now();
+        const int64_t offset_ns =
+          static_cast<int64_t>(ros_now.nanoseconds()) -
+          static_cast<int64_t>(sdk_now.getNanoseconds());
+        sl_tools::setSdkLiveTimeOffsetNs(offset_ns);
+        RCLCPP_INFO_STREAM(
+          get_logger(),
+          "SDK monotonic-clock offset captured: "
+            << (offset_ns / 1000000) << " ms");
+      }
+#endif
       break;
     }
 
@@ -3647,8 +3714,8 @@ bool ZedCamera::startCamera()
         sl_tools::slTime2Ros(mZed->getTimestamp(sl::TIME_REFERENCE::IMAGE));
     }
   } else {
-    mFrameTimestamp =
-      sl_tools::slTime2Ros(mZed->getTimestamp(sl::TIME_REFERENCE::IMAGE));
+    mFrameTimestamp = sl_tools::slTime2Ros(
+      mZed->getTimestamp(sl::TIME_REFERENCE::IMAGE));
   }
   // <---- Timestamp
 
@@ -4298,6 +4365,9 @@ bool ZedCamera::startSvoRecording(std::string & errMsg)
   params.target_framerate = mSvoRecFramerate;
   params.transcode_streaming_input = mSvoRecTranscode;
   params.video_filename = mSvoRecFilename.c_str();
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  params.encoding_preset = mSvoRecEncodingPreset;
+#endif
 
   sl::ERROR_CODE err = mZed->enableRecording(params);
   errMsg = sl::toString(err);
@@ -5186,8 +5256,8 @@ void ZedCamera::threadFunc_zedGrab()
             mZed->getTimestamp(sl::TIME_REFERENCE::IMAGE));
         }
       } else {
-        mFrameTimestamp =
-          sl_tools::slTime2Ros(mZed->getTimestamp(sl::TIME_REFERENCE::IMAGE));
+        mFrameTimestamp = sl_tools::slTime2Ros(
+          mZed->getTimestamp(sl::TIME_REFERENCE::IMAGE));
       }
       //DEBUG_STREAM_COMM("Grab timestamp: " << mFrameTimestamp.nanoseconds() << " nsec");
       // <---- Timestamp
@@ -8663,6 +8733,12 @@ void ZedCamera::callback_updateDiagnostic(
       dropped, total, perc_drop);
     // <---- Frame drop count
 
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+    if (sl_tools::isZEDX(mCamRealModel) && mSceneIlluminance >= 0) {
+      stat.add("Scene Illuminance", mSceneIlluminance);
+    }
+#endif
+
     if (mSimMode) {
       stat.add("Input mode", "SIMULATION");
     } else if (mSvoMode) {
@@ -9998,6 +10074,11 @@ void ZedCamera::publishHealthStatus()
   msg->low_depth_reliability = status.low_depth_reliability;
   msg->low_motion_sensors_reliability =
     status.low_motion_sensors_reliability;
+#if defined(ZED_MSGS_ILLUMINANCE_AVAIL) && \
+  (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  // Populated periodically in applyZEDXSettings; -1 means unread / unsupported.
+  msg->scene_illuminance = mSceneIlluminance;
+#endif
 
   mPubHealthStatus->publish(std::move(msg));
 }

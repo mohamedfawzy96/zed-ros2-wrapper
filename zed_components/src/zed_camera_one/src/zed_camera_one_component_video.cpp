@@ -122,6 +122,14 @@ void ZedCameraOne::getVideoParams()
     _camDenoising, " * Denoising: ", true, 0, 100);
   _camDynParMapChanged["video.denoising"] = true;
 
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  sl_tools::getParam(
+    shared_from_this(), "video.ae_antibanding", _camAEAntibanding,
+    _camAEAntibanding,
+    " * AE Anti-banding (0=OFF,1=AUTO,2=50Hz,3=60Hz): ", true, 0, 3);
+  _camDynParMapChanged["video.ae_antibanding"] = true;
+#endif
+
   _triggerUpdateDynParams = true;
 }
 
@@ -1253,6 +1261,20 @@ void ZedCameraOne::applyExposureCompensationAndDenoising()
     "video.exposure_compensation");
 
   setVideoSetting(sl::VIDEO_SETTINGS::DENOISING, _camDenoising, "video.denoising");
+
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  setVideoSetting(
+    sl::VIDEO_SETTINGS::AE_ANTIBANDING, _camAEAntibanding,
+    "video.ae_antibanding");
+
+  // Read-only metric: scene illuminance (cached for diagnostic publication)
+  int illum = -1;
+  if (_zed->getCameraSettings(sl::VIDEO_SETTINGS::SCENE_ILLUMINANCE, illum) ==
+    sl::ERROR_CODE::SUCCESS)
+  {
+    _sceneIlluminance = illum;
+  }
+#endif
 }
 
 void ZedCameraOne::publishCameraInfos()

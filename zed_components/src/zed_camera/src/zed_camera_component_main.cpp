@@ -743,12 +743,6 @@ void ZedCamera::getDebugParams()
     shared_from_this(), "debug.use_pub_timestamps",
     mUsePubTimestamps, mUsePubTimestamps,
     " * Use Pub Timestamps: ");
-#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
-  sl_tools::getParam(
-    shared_from_this(), "debug.sdk_use_monotonic_clock",
-    mUseSdkMonotonicClock, mUseSdkMonotonicClock,
-    " * SDK Monotonic Clock: ");
-#endif
   sl_tools::getParam(
     shared_from_this(), "debug.sdk_verbose_log_file",
     mVerboseLogFile, mVerboseLogFile, " * SDK Verbose File: ");
@@ -1372,11 +1366,45 @@ void ZedCamera::getGeneralParams()
     mGrabComputeCappingFps, mGrabComputeCappingFps,
     " * Grab Compute Capping FPS: ", false, 0.0,
     static_cast<double>(mCamGrabFrameRate));
+
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  sl_tools::getParam(
+    shared_from_this(), "general.sdk_use_monotonic_clock",
+    mUseSdkMonotonicClock, mUseSdkMonotonicClock,
+    " * SDK Monotonic Clock: ");
+#endif
 }
 
 void ZedCamera::getSvoParams()
 {
   rclcpp::Parameter paramVal;
+
+  RCLCPP_INFO(get_logger(), "=== SVO RECORDING parameters ===");
+
+#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
+  std::string enc_preset = "DEFAULT";
+  sl_tools::getParam(
+    shared_from_this(), "svo.svo_encoding_preset", enc_preset,
+    enc_preset, " * SVO Encoding preset: ");
+  if (enc_preset == "ULTRAFAST") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::ULTRAFAST;
+  } else if (enc_preset == "FAST") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::FAST;
+  } else if (enc_preset == "MEDIUM") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::MEDIUM;
+  } else if (enc_preset == "SLOW") {
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::SLOW;
+  } else {
+    if (enc_preset != "DEFAULT") {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "Invalid 'svo.svo_encoding_preset' value: '"
+          << enc_preset
+          << "'. Valid values: DEFAULT, ULTRAFAST, FAST, MEDIUM, SLOW. Using 'DEFAULT'.");
+    }
+    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::DEFAULT;
+  }
+#endif
 
   RCLCPP_INFO(get_logger(), "=== SVO INPUT parameters ===");
 
@@ -1440,31 +1468,6 @@ void ZedCamera::getSvoParams()
         mSvoRate, " * SVO replay rate: ", true, 0.1, 5.0);
     }
   }
-
-#if (ZED_SDK_MAJOR_VERSION * 10 + ZED_SDK_MINOR_VERSION) >= 53
-  std::string enc_preset = "DEFAULT";
-  sl_tools::getParam(
-    shared_from_this(), "general.svo_encoding_preset", enc_preset,
-    enc_preset, " * SVO Encoding preset: ");
-  if (enc_preset == "ULTRAFAST") {
-    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::ULTRAFAST;
-  } else if (enc_preset == "FAST") {
-    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::FAST;
-  } else if (enc_preset == "MEDIUM") {
-    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::MEDIUM;
-  } else if (enc_preset == "SLOW") {
-    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::SLOW;
-  } else {
-    if (enc_preset != "DEFAULT") {
-      RCLCPP_WARN_STREAM(
-        get_logger(),
-        "Invalid 'general.svo_encoding_preset' value: '"
-          << enc_preset
-          << "'. Valid values: DEFAULT, ULTRAFAST, FAST, MEDIUM, SLOW. Using 'DEFAULT'.");
-    }
-    mSvoRecEncodingPreset = sl::SVO_ENCODING_PRESET::DEFAULT;
-  }
-#endif
 }
 
 void ZedCamera::getRoiParams()
@@ -2912,7 +2915,7 @@ bool ZedCamera::startCamera()
       RCLCPP_WARN(
         get_logger(),
         "Another node in this process already set the SDK timestamp clock; "
-        "this node's 'debug.sdk_use_monotonic_clock' request was ignored.");
+        "this node's 'general.sdk_use_monotonic_clock' request was ignored.");
       mUseSdkMonotonicClock = false;
     } else {
       RCLCPP_INFO(

@@ -11,9 +11,9 @@ v5.3
 - Added `video.ae_antibanding` parameter for ZED X cameras to control auto-exposure anti-banding mode (0=OFF, 1=AUTO, 2=50Hz, 3=60Hz). Dynamically reconfigurable.
 - Added `Scene Illuminance` field to the diagnostic output for ZED X cameras (read-only metric reflecting the level of light in the scene).
 - Added `scene_illuminance` field (int32, units 0.1 lux) to the `HealthStatusStamped` message published on `~/status/health`. Value -1 indicates the metric is unsupported by the connected camera. Requires the matching `zed_msgs` v5.3.
-- Added `general.svo_encoding_preset` parameter (`DEFAULT`, `ULTRAFAST`, `FAST`, `MEDIUM`, `SLOW`) to choose the SVO encoder speed/quality preset when starting a recording.
+- Added `svo.svo_encoding_preset` parameter (`DEFAULT`, `ULTRAFAST`, `FAST`, `MEDIUM`, `SLOW`) to choose the SVO encoder speed/quality preset when starting a recording.
 - Added `svo.decryption_key` parameter (stereo and mono) to open encrypted SVO files. The key/passphrase is forwarded to the SDK via `InitParameters::svo_decryption_key`.
-- Added `debug.sdk_use_monotonic_clock` parameter that switches the SDK to `TIMESTAMP_CLOCK::MONOTONIC_CLOCK` so timestamps are immune to host clock step adjustments (NTP/PTP). When combined with `debug.use_pub_timestamps: false`, an offset captured at camera open is applied so published Header stamps remain ROS-epoch-shaped while inter-frame deltas stay monotonic. Process-wide setting; in a composition the first node to open wins (subsequent nodes log a warning and fall back to the active clock).
+- Added `general.sdk_use_monotonic_clock` parameter that switches the SDK to `TIMESTAMP_CLOCK::MONOTONIC_CLOCK` so timestamps are immune to host clock step adjustments (NTP/PTP). When combined with `debug.use_pub_timestamps: false`, an offset captured at camera open is applied so published Header stamps remain ROS-epoch-shaped while inter-frame deltas stay monotonic. Process-wide setting; in a composition the first node to open wins (subsequent nodes log a warning and fall back to the active clock).
 - IPC is now handled automatically disabling it when NITROS is enabled and enabling it when NITROS is disabled. The `debug.disable_nitros` parameter can be used to disable NITROS and enable IPC if needed.
 - Added support to `rclcpp::TypeAdapter` for better handling of Image messages:
 

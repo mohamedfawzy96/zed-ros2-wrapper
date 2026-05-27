@@ -10,10 +10,10 @@
             pub_downscale_factor: 2.0 # rescale factor used to rescale image before publishing when 'pub_resolution' is 'CUSTOM'
             gpu_id: -1
             optional_opencv_calibration_file: "" # Optional path where the ZED SDK can find a file containing the calibration information of the camera computed by OpenCV. Read the ZED SDK documentation for more information: https://www.stereolabs.com/docs/api/structsl_1_1InitParameters.html#a9eab2753374ef3baec1d31960859ba19
-            publish_status: true # Enable/Disable the publishing of the camera status topic
-            svo_encoding_preset: 'DEFAULT' # [SDK >= 5.3] SVO encoder speed/quality preset used by the 'start_svo_rec' service. One of 'DEFAULT', 'ULTRAFAST', 'FAST', 'MEDIUM', 'SLOW'
+            publish_status: true # Enable/Disable the publishing of the camera status topic            
 
         svo:
+            svo_encoding_preset: 'DEFAULT' # [SDK >= 5.3] SVO encoder speed/quality preset used by the 'start_svo_rec' service. One of 'DEFAULT', 'ULTRAFAST', 'FAST', 'MEDIUM', 'SLOW'
             decryption_key: "" # Optional decryption key/passphrase when opening encrypted SVO files
             use_svo_timestamps: true # Use the SVO timestamps to publish data. If false, data will be published at the system time.
             publish_svo_clock: true # [overwritten by launch file options] When use_svo_timestamps is true allows to publish the SVO clock to the `/clock` topic. This is useful for synchronous rosbag playback.

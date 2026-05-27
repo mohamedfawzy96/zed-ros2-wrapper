@@ -15,10 +15,17 @@
 #include "zed_camera_one_component.hpp"
 #include "sl_logging.hpp"
 
+#include <mutex>
 #include <image_transport/camera_common.hpp>
 
 #include <sensor_msgs/distortion_models.hpp>
 #include <sensor_msgs/image_encodings.hpp>
+
+namespace
+{
+// Same race guard as in zed_camera_component_video_depth.cpp — see comment there.
+std::mutex g_it_pub_init_mutex;
+}
 
 namespace stereolabs
 {
@@ -281,12 +288,15 @@ void ZedCameraOne::initVideoPublishers()
     image_transport::Publisher & itPub,
     ImageTopicType type = ImageTopicType::IMAGE) {
       ipcPub = create_ipc_pub(topic);
-      set_transport_plugins(topic, type);
+      {
+        std::lock_guard<std::mutex> lock(g_it_pub_init_mutex);
+        set_transport_plugins(topic, type);
 #ifdef FOUND_HUMBLE
-      itPub = image_transport::create_publisher(this, topic, qos);
+        itPub = image_transport::create_publisher(this, topic, qos);
 #else
-      itPub = image_transport::create_publisher(this, topic, qos, _pubOpt);
+        itPub = image_transport::create_publisher(this, topic, qos, _pubOpt);
 #endif
+      }
       log_cam_pub(itPub);
     };
 

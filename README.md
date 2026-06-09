@@ -30,7 +30,7 @@ This package enables the use of ZED cameras with ROS 2, providing access to a va
 ### Prerequisites
 
 - [Ubuntu 20.04 (Focal Fossa)](https://releases.ubuntu.com/focal/), [Ubuntu 22.04 (Jammy Jellyfish)](https://releases.ubuntu.com/jammy/), or [Ubuntu 24.04 (Noble Numbat)](https://releases.ubuntu.com/noble/)
-- [ZED SDK](https://www.stereolabs.com/developers/release/latest/) v5.1 (to support older versions please check the [releases](https://github.com/stereolabs/zed-ros2-wrapper/releases))
+- [ZED SDK](https://www.stereolabs.com/developers/release/latest/) v5.2 (to support older versions please check the [releases](https://github.com/stereolabs/zed-ros2-wrapper/releases))
 - [CUDA](https://developer.nvidia.com/cuda-downloads) dependency
 - ROS 2 Foxy Fitzroy (deprecated), ROS 2 Humble Hawksbill, or ROS 2 Jazzy Jalisco:
   - [Foxy on Ubuntu 20.04](https://docs.ros.org/en/foxy/Installation/Linux-Install-Debians.html) [**Not recommended. EOL reached**]
@@ -58,11 +58,13 @@ echo source $(pwd)/install/local_setup.bash >> ~/.bashrc # automatically source 
 source ~/.bashrc
 ```
 
-> :pushpin: **Note:** the dependency `zed_msgs` is no longer installed as a submodule of this package, but is available through `apt` as a binary package with ROS 2 Humble. When working with ROS 2 Foxy, or other distributions, you can install it from the sources from the [zed-ros2-interfaces repository](https://github.com/stereolabs/zed-ros2-interfaces?tab=readme-ov-file#install-the-package-from-the-source-code).
+> :pushpin: **Note:** the dependency `zed_msgs` is no longer installed as a submodule of this package; it is available through `apt` as a binary package with ROS 2 Humble. When working with ROS 2 Foxy, or other distributions, you can install it from the sources from the [zed-ros2-interfaces repository](https://github.com/stereolabs/zed-ros2-interfaces?tab=readme-ov-file#install-the-package-from-the-source-code).
 
 > :pushpin: **Note:** If `rosdep` is missing, you can install it with:
 >
 >`sudo apt-get install python3-rosdep python3-rosinstall-generator python3-vcstool python3-rosinstall build-essential`
+
+> :pushpin: **Note:** The `zed_debug` package is intended for internal development only. If you don’t need it, you can skip building this package by adding `--packages-skip zed_debug` to your `colcon` command.
 
 > :pushpin: **Note:** When using the ZED ROS 2 Wrapper on an NVIDIA Jetson with JP6, you may get the following error when building the package for the first time
 >
@@ -84,7 +86,7 @@ source ~/.bashrc
 
 ## Starting the ZED node
 
-> :pushpin: **Note:** we recommend reading [this ROS 2 tuning guide](https://www.stereolabs.com/docs/ros2/150_dds_and_network_tuning) to improve the ROS 2 experience with ZED.
+> :pushpin: **Note:** we recommend reading [this ROS 2 tuning guide](https://www.stereolabs.com/docs/ros2/dds_and_network_tuning) to improve the ROS 2 experience with ZED.
 
 To start the ZED node, open a bash terminal and use the [CLI](https://index.ros.org/doc/ros2/Tutorials/Introspection-with-command-line-tools/) command `ros2 launch`:
 
@@ -92,7 +94,7 @@ To start the ZED node, open a bash terminal and use the [CLI](https://index.ros.
 ros2 launch zed_wrapper zed_camera.launch.py camera_model:=<camera_model>
 ```
 
-Replace `<camera_model>` with the model of the camera that you are using: `'zed'`, `'zedm'`, `'zed2'`, `'zed2i'`, `'zedx'`, `'zedxm'`, `'zedxhdrmini'`, `'zedxhdr'`, `'zedxhdrmax'`, `'virtual'`,`'zedxonegs'`,`'zedxone4k'`,`'zedxonehdr'`.
+Replace `<camera_model>` with the model of the camera that you are using: `'zed'`, `'zedm'`, `'zed2'`, `'zed2i'`, `'zedx'`, `'zedxm'`, `'zedxnano'`, `'zedxhdrmini'`, `'zedxhdr'`, `'zedxhdrmax'`, `'virtual'`,`'zedxonegs'`,`'zedxone4k'`,`'zedxonehdr'`.
 
 The `zed_camera.launch.py` is a Python launch script that automatically starts the ZED node using ["manual composition"](https://index.ros.org/doc/ros2/Tutorials/Composition/). The parameters for the indicated camera model are loaded from the relative "YAML files."
 A Robot State Publisher node is started to publish the camera static links and joints loaded from the URDF model associated with the camera model.

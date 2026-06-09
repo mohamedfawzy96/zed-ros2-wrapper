@@ -7,10 +7,11 @@
         general:
             serial_number: 0 # overwritten by launch file
             pub_resolution: "CUSTOM" # The resolution used for output. 'NATIVE' to use the same `general.grab_resolution` - `CUSTOM` to apply the `general.pub_downscale_factor` downscale factory to reduce bandwidth in transmission
-            pub_downscale_factor: 3.0 # rescale factor used to rescale image before publishing when 'pub_resolution' is 'CUSTOM'
+            pub_downscale_factor: 2.0 # rescale factor used to rescale image before publishing when 'pub_resolution' is 'CUSTOM'
             gpu_id: -1
             optional_opencv_calibration_file: "" # Optional path where the ZED SDK can find a file containing the calibration information of the camera computed by OpenCV. Read the ZED SDK documentation for more information: https://www.stereolabs.com/docs/api/structsl_1_1InitParameters.html#a9eab2753374ef3baec1d31960859ba19
-            publish_status: true # Enable/Disable the publishing of the camera status topic            
+            publish_status: true # Enable/Disable the publishing of the camera status topic
+            sdk_use_monotonic_clock: false # [SDK >= 5.3] Use sl::TIMESTAMP_CLOCK::MONOTONIC_CLOCK so SDK timestamps are immune to host clock steps (NTP/PTP). Process-wide; first node in a composition wins. When true and 'use_pub_timestamps' is false, an offset captured at camera open keeps Header.stamp ROS-epoch-shaped while inter-frame deltas remain monotonic across system clock steps that happen after open.
 
         svo:
             svo_encoding_preset: 'DEFAULT' # [SDK >= 5.3] SVO encoder speed/quality preset used by the 'start_svo_rec' service. One of 'DEFAULT', 'ULTRAFAST', 'FAST', 'MEDIUM', 'SLOW'
@@ -57,7 +58,7 @@
 
         stream_server:
             stream_enabled: false # enable the streaming server when the camera is open
-            codec: 'H265' # different encoding types for image streaming: 'H264', 'H265'
+            codec: 'H264' # different encoding types for image streaming: 'H264', 'H265'
             port: 30000 # Port used for streaming. Port must be an even number. Any odd number will be rejected.
             bitrate: 12500 # [1000 - 60000] Streaming bitrate (in Kbits/s) used for streaming. See https://www.stereolabs.com/docs/api/structsl_1_1StreamingParameters.html#a873ba9440e3e9786eb1476a3bfa536d0
             gop_size: -1 # [max 256] The GOP size determines the maximum distance between IDR/I-frames. Very high GOP size will result in slightly more efficient compression, especially on static scenes. But latency will increase.
@@ -72,16 +73,15 @@
             thread_sensor_priority: 70 # ONLY with 'SCHED_FIFO' and 'SCHED_RR' - [1 (LOW) z-> 99 (HIGH)] - NOTE: 'sudo' required
 
         debug:
-            sdk_verbose: 0 # Set the verbose level of the ZED SDK
+            sdk_verbose: 1 # Set the verbose level of the ZED SDK
             sdk_verbose_log_file: '' # Path to the file where the ZED SDK will log its messages. If empty, no file will be created. The log level can be set using the `sdk_verbose` parameter.
             use_pub_timestamps: false # Use the current ROS time for the message timestamp instead of the camera timestamp. This is useful to test data communication latency.
-            sdk_use_monotonic_clock: false # [SDK >= 5.3] Use sl::TIMESTAMP_CLOCK::MONOTONIC_CLOCK so SDK timestamps are immune to host clock steps (NTP/PTP). Process-wide; first node in a composition wins. When true and 'use_pub_timestamps' is false, an offset captured at camera open keeps Header.stamp ROS-epoch-shaped while inter-frame deltas remain monotonic across system clock steps that happen after open.
-            debug_common: false # Enable/Disable the printing of debug messages related to the common parameters and functionalities
-            debug_dyn_params: false # Enable/Disable the printing of debug messages related to dynamic parameters updates
-            debug_video_depth: false # Enable/Disable the printing of debug messages related to video and depth parameters and functionalities
-            debug_camera_controls: false # Enable/Disable the printing of debug messages related to camera controls (exposure, gain, white balance, etc)
-            debug_sensors: false # Enable/Disable the printing of debug messages related to sensors data and functionalities
-            debug_streaming: false # Enable/Disable the printing of debug messages related to the network streaming functionalities
-            debug_advanced: false # Enable/Disable the printing of debug messages related to advanced thread parameters and functionalities
-            debug_nitros: false # Enable/Disable the printing of debug messages related to NITROS functionalities
+            debug_common: false
+            debug_dyn_params: false
+            debug_video_depth: false
+            debug_camera_controls: false
+            debug_sensors: false
+            debug_streaming: false
+            debug_advanced: false
+            debug_nitros: false
             disable_nitros: false # If available, disable NITROS usage for debugging and testing purposes
